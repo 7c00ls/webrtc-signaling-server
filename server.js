@@ -1,36 +1,21 @@
-
 const express = require("express");
 const http = require("http");
-const { Server } = require("socket.io");
+const socketIO = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
+const io = socketIO(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: "*"
   }
 });
 
-io.on("connection", (socket) => {
-  socket.on("join", (id) => {
-    socket.join(id); // Join room using 6-digit ID
-  });
-
-  socket.on("call", ({ to, from, offer }) => {
-    io.to(to).emit("call", { from, offer, to });
-  });
-
-  socket.on("answer", ({ to, answer }) => {
-    io.to(to).emit("answer", { answer });
-  });
-
-  socket.on("ice-candidate", ({ to, candidate }) => {
-    io.to(to).emit("ice-candidate", { candidate });
-  });
+io.on("connection", socket => {
+  socket.on("offer", data => socket.broadcast.emit("offer", data));
+  socket.on("answer", data => socket.broadcast.emit("answer", data));
+  socket.on("ice-candidate", data => socket.broadcast.emit("ice-candidate", data));
 });
 
-server.listen(3000, () => {
-  console.log("Signaling server running on port 3000");
-});
+server.listen(3000, () => console.log("Signaling server running on http://localhost:3000"));
+
 
